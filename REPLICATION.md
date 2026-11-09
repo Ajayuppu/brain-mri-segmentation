@@ -2,7 +2,7 @@
 
 This guide is the public-repo path for repeating the LGG FLAIR binary-segmentation study: environment setup, the Kaggle dataset, the data-root layout the scripts actually read, the metadata audit, the validation always-empty reference, the 14 training runs, the one-shot freeze, and the single test evaluation. It was written from the code and docs in this repository.
 
-Checkpoints, evaluation evidence, and the written report are not in this repository. They are kept in a private companion repository and are available on request. This file does not link that repository, and it does not republish its numeric test table.
+Checkpoints, evaluation evidence, and the written report are not in this repository. They are kept in a private companion repository and are available on request. This file does not link that repository. The headline test table below is from that single frozen evaluation.
 
 The study that those artifacts record was completed, frozen, and test-evaluated once on 2026-11-08.
 
@@ -293,19 +293,21 @@ Patient Dice is a volume Dice. For each `patient_id`, sum `tp`, `fp`, and `fn` o
 | `empty_fp_pixels_total`, `empty_fp_pixels_mean` | False-positive pixel burden on empty slices |
 | `patient_dice_mean`, `patient_dice_median`, `patient_dice_std`, `patient_dice_min` | Distribution of per-patient volume Dice |
 
-Headline aggregation used for the four three-seed methods (`bce_baseline`, `bce_dice`, `bce_dice_posonly`, `weighted_bce`): the arithmetic mean and the standard deviation of `positive_slice_dice` across seeds 0, 1, and 2, together with `empty_fp_rate` for each method. `bce_dice_w0.5` and `bce_dice_w2` have seed 0 only, so they have a single positive-slice Dice and a single empty-slice FP rate, not a three-seed mean or standard deviation.
+Headline aggregation for `bce_baseline`, `bce_dice`, `bce_dice_posonly`, and `weighted_bce` is the mean ± sample standard deviation over seeds 0–2 of positive-slice Dice, empty-slice FP rate, and patient-volume Dice. Patient-volume Dice is volume Dice from summed TP/FP/FN per patient, averaged over the 16 patients. `bce_dice_w0.5` and `bce_dice_w2` are seed 0 only, so those cells are single values.
 
-The 2026-11-08 numbers are omitted from the table. They were not available from this repository when this guide was written. `evidence/test/test_results.json`, the per-slice CSVs, the freeze record, the checkpoints, and the report are in the private companion repository, available on request.
+These values come from the single frozen test evaluation recorded in the private companion repository (16 patients, 568 slices: 200 positive, 368 empty).
 
-| Method | Seeds | Positive-slice Dice | Empty-slice FP rate |
-| --- | --- | --- | --- |
-| always-empty reference | — | omitted | omitted |
-| `bce_baseline` | 0, 1, 2 | omitted | omitted |
-| `bce_dice` | 0, 1, 2 | omitted | omitted |
-| `bce_dice_posonly` | 0, 1, 2 | omitted | omitted |
-| `weighted_bce` | 0, 1, 2 | omitted | omitted |
-| `bce_dice_w0.5` | 0 | omitted | omitted |
-| `bce_dice_w2` | 0 | omitted | omitted |
+BCE+soft Dice did not beat plain BCE on test: positive-slice Dice is essentially equal, with a smaller seed spread. BCE+Dice also had lower patient-volume Dice and a higher empty-slice FP rate.
+
+| Method | Seeds | Positive-slice Dice (mean ± SD) | Empty-slice FP rate (mean ± SD) | Patient-volume Dice (mean ± SD) |
+| --- | --- | --- | --- | --- |
+| always-empty reference | — | 0 | 0 | 0 |
+| `bce_baseline` | 0, 1, 2 | 0.7259 ± 0.0202 | 0.0770 ± 0.0166 | 0.7723 ± 0.0167 |
+| `bce_dice` | 0, 1, 2 | 0.7255 ± 0.0074 | 0.1114 ± 0.0339 | 0.7582 ± 0.0181 |
+| `bce_dice_posonly` | 0, 1, 2 | 0.7364 ± 0.0141 | 0.1730 ± 0.0775 | 0.7484 ± 0.0342 |
+| `weighted_bce` | 0, 1, 2 | 0.6610 ± 0.0228 | 0.1594 ± 0.0857 | 0.6639 ± 0.0266 |
+| `bce_dice_w0.5` | 0 only | 0.7092 | 0.0761 | 0.7458 |
+| `bce_dice_w2` | 0 only | 0.7348 | 0.1223 | 0.7518 |
 
 ## Nondeterminism
 

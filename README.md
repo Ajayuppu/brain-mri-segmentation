@@ -8,18 +8,21 @@ Status: **the full 14-run study was completed, frozen, and test-evaluated once o
 
 ## Headline test metrics
 
-The test headline is positive-slice Dice and the empty-slice false-positive rate. For `bce_baseline`, `bce_dice`, `bce_dice_posonly`, and `weighted_bce`, positive-slice Dice is the mean ± standard deviation over seeds 0, 1, and 2. `bce_dice_w0.5` and `bce_dice_w2` were trained at seed 0 only. Empty-slice FP rate is the fraction of ground-truth-empty slices with any false-positive pixel. Definitions are in [REPLICATION.md](REPLICATION.md).
+The test headline is positive-slice Dice, the empty-slice false-positive rate, and patient-volume Dice (volume Dice from summed TP/FP/FN per patient, averaged over the 16 patients). For `bce_baseline`, `bce_dice`, `bce_dice_posonly`, and `weighted_bce`, each reported value is the mean ± sample standard deviation over seeds 0, 1, and 2. `bce_dice_w0.5` and `bce_dice_w2` were trained at seed 0 only. Empty-slice FP rate is the fraction of ground-truth-empty slices with any false-positive pixel. Definitions are in [REPLICATION.md](REPLICATION.md).
 
-Numeric cells are omitted. `evidence/test/test_results.json` is not in this repository, so these values were not computed here.
+These values come from the single frozen test evaluation recorded in the private companion repository (16 patients, 568 slices: 200 positive, 368 empty).
 
-| Method | Seeds | Positive-slice Dice (mean ± SD) | Empty-slice FP rate |
-| --- | --- | --- | --- |
-| `bce_baseline` | 0, 1, 2 | omitted | omitted |
-| `bce_dice` | 0, 1, 2 | omitted | omitted |
-| `bce_dice_posonly` | 0, 1, 2 | omitted | omitted |
-| `weighted_bce` | 0, 1, 2 | omitted | omitted |
-| `bce_dice_w0.5` | 0 only | omitted | omitted |
-| `bce_dice_w2` | 0 only | omitted | omitted |
+BCE+soft Dice did not beat plain BCE on test: positive-slice Dice is essentially equal, with a smaller seed spread. BCE+Dice also had lower patient-volume Dice and a higher empty-slice FP rate.
+
+| Method | Seeds | Positive-slice Dice (mean ± SD) | Empty-slice FP rate (mean ± SD) | Patient-volume Dice (mean ± SD) |
+| --- | --- | --- | --- | --- |
+| always-empty reference | — | 0 | 0 | 0 |
+| `bce_baseline` | 0, 1, 2 | 0.7259 ± 0.0202 | 0.0770 ± 0.0166 | 0.7723 ± 0.0167 |
+| `bce_dice` | 0, 1, 2 | 0.7255 ± 0.0074 | 0.1114 ± 0.0339 | 0.7582 ± 0.0181 |
+| `bce_dice_posonly` | 0, 1, 2 | 0.7364 ± 0.0141 | 0.1730 ± 0.0775 | 0.7484 ± 0.0342 |
+| `weighted_bce` | 0, 1, 2 | 0.6610 ± 0.0228 | 0.1594 ± 0.0857 | 0.6639 ± 0.0266 |
+| `bce_dice_w0.5` | 0 only | 0.7092 | 0.0761 | 0.7458 |
+| `bce_dice_w2` | 0 only | 0.7348 | 0.1223 | 0.7518 |
 
 ## Setup
 
