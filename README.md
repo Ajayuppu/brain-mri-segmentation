@@ -2,9 +2,24 @@
 
 2D U-Net in PyTorch, trained from scratch, for binary tumor segmentation on lower-grade glioma (LGG) FLAIR MRI. The study compares plain BCE with BCE + soft Dice under a shared training budget, plus diagnostic and Dice-weight sensitivity runs.
 
-**The dataset and trained checkpoints are not included.** Images, masks, manifest CSVs, `*.pt` / `*.pth` weights, `runs/`, freeze records, and `evidence/` stay on your machine and are gitignored.
+**The dataset and trained checkpoints are not included.** Images, masks, manifest CSVs, `*.pt` / `*.pth` weights, `runs/`, freeze records, and `evidence/` stay on your machine and are gitignored. Checkpoints, evaluation evidence, and the written report are kept in a private companion repository and are available on request.
 
-Status: **code package prepared; no full training run is shipped here.** All metrics produced from this tree are from smoke tests unless a `run_meta.json` says `"smoke_test": false`.
+Status: **the full 14-run study was completed, frozen, and test-evaluated once on 2026-11-08.** Checkpoints and data are not included here. How to repeat training and the single test evaluation is in [REPLICATION.md](REPLICATION.md). Metrics computed only from this tree are smoke-test metrics unless a local `run_meta.json` says `"smoke_test": false`.
+
+## Headline test metrics
+
+The test headline is positive-slice Dice and the empty-slice false-positive rate. For `bce_baseline`, `bce_dice`, `bce_dice_posonly`, and `weighted_bce`, positive-slice Dice is the mean ± standard deviation over seeds 0, 1, and 2. `bce_dice_w0.5` and `bce_dice_w2` were trained at seed 0 only. Empty-slice FP rate is the fraction of ground-truth-empty slices with any false-positive pixel. Definitions are in [REPLICATION.md](REPLICATION.md).
+
+Numeric cells are omitted. `evidence/test/test_results.json` is not in this repository, so these values were not computed here.
+
+| Method | Seeds | Positive-slice Dice (mean ± SD) | Empty-slice FP rate |
+| --- | --- | --- | --- |
+| `bce_baseline` | 0, 1, 2 | omitted | omitted |
+| `bce_dice` | 0, 1, 2 | omitted | omitted |
+| `bce_dice_posonly` | 0, 1, 2 | omitted | omitted |
+| `weighted_bce` | 0, 1, 2 | omitted | omitted |
+| `bce_dice_w0.5` | 0 only | omitted | omitted |
+| `bce_dice_w2` | 0 only | omitted | omitted |
 
 ## Setup
 
@@ -56,7 +71,7 @@ pytest -q tests
 
 ## Train
 
-Files in `configs/` share one budget (50 epochs, batch size 16, AdamW, 32 base channels, the same validation selection rule). Only the loss changes. `configs/pilot_bce_3ep.yaml` is a 3-epoch throughput check, not a research result.
+Files in `configs/` share one budget (50 epochs, batch size 16, AdamW, 32 base channels, the same validation selection rule). Only the loss changes. `configs/pilot_bce_3ep.yaml` is a 3-epoch throughput check, not a research result. The completed study trained `bce_baseline`, `bce_dice`, `bce_dice_posonly`, and `weighted_bce` at seeds 0, 1, and 2, and trained `bce_dice_w0.5` and `bce_dice_w2` at seed 0 only (14 runs). The command list, freeze, and the one-time test evaluation are in [REPLICATION.md](REPLICATION.md).
 
 | Config | Loss |
 | --- | --- |
@@ -74,18 +89,17 @@ export DATA=data
 python scripts/audit_metadata.py --data-root "$DATA"
 python scripts/eval_reference.py --data-root "$DATA"
 
-# Main comparison, three seeds. The checkpoint and the threshold are chosen on validation only.
-for c in bce_baseline bce_dice; do
+# Twelve runs at seeds 0, 1, and 2. The checkpoint and the threshold are chosen on validation only.
+# bce_dice_w0.5 and bce_dice_w2 are seed 0 only; they are not in this loop.
+for c in bce_baseline bce_dice bce_dice_posonly weighted_bce; do
   for s in 0 1 2; do
     python scripts/train.py --config "configs/${c}.yaml" --data-root "$DATA" --seed "$s"
   done
 done
 
-# Diagnostic and sensitivity runs, same budget, still validation only.
-for c in bce_dice_posonly bce_dice_w0.5 bce_dice_w2 weighted_bce; do
-  for s in 0 1 2; do
-    python scripts/train.py --config "configs/${c}.yaml" --data-root "$DATA" --seed "$s"
-  done
+# Dice-weight sensitivity, same budget, validation only: seed 0 only.
+for c in bce_dice_w0.5 bce_dice_w2; do
+  python scripts/train.py --config "configs/${c}.yaml" --data-root "$DATA" --seed 0
 done
 ```
 
@@ -109,7 +123,7 @@ python scripts/freeze.py \
 python scripts/evaluate_test.py --data-root "$DATA" --i-confirm-method-is-frozen
 ```
 
-Pass every run you intend to score, not only one. `evaluate_test.py` writes under `evidence/test/` (gitignored), including `TEST_EVAL_LEDGER.json`. Deleting `TEST_EVAL.lock` does not reopen a completed evaluation.
+Pass every run you intend to score, not only one. `evaluate_test.py` writes under `evidence/test/` by default (gitignored), including `TEST_EVAL_LEDGER.json`. Use a fresh `--out-dir` when that directory already contains a ledger. Deleting `TEST_EVAL.lock` does not reopen a completed evaluation. The 14-run freeze and the one-time evaluation command are in [REPLICATION.md](REPLICATION.md).
 
 Inference on individual TIFFs, using one run directory (checkpoint, channel stats, validation threshold):
 
